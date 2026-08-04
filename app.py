@@ -382,4 +382,5 @@ with tab_admin:
             ocorrencia_row = df[df['id'] == id_selecionado]
             
             if not ocorrencia_row.empty:
-                d = ocorrencia_row.iloc[0].
+            d = ocorrencia_row.iloc[0].to_dict()
+            
