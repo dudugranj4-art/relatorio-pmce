@@ -382,5 +382,21 @@ with tab_admin:
             ocorrencia_row = df[df['id'] == id_selecionado]
             
             if not ocorrencia_row.empty:
-            d = ocorrencia_row.iloc[0].to_dict()
-            
+                d = ocorrencia_row.iloc[0].to_dict()
+                
+                col_btn1, col_btn2 = st.columns(2)
+                
+                # Botão de Exportação para PDF
+                with col_btn1:
+                    pdf_data = gerar_pdf_ocorrencia(d)
+                    st.download_button(
+                        label="📄 BAIXAR RELATÓRIO OFICIAL EM PDF",
+                        data=pdf_data,
+                        file_name=f"Relatorio_PMCE_{d['id']:06d}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True
+                    )
+                
+                # Formulário de Edição/Alteração
+                with col_btn2:
+                    st.info(f"Ocorrência Selecionada: Protocolo #{d['id']:06d}")
