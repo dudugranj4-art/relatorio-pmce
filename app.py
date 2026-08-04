@@ -1,12 +1,13 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, time
 from weasyprint import HTML
-import io
+import base64
+import os
 
 # -----------------------------------------------------------------------------
-# 1. CONFIGURAÇÃO DA PÁGINA E CSS PERSONALIZADO (IDENTIDADE PMCE)
+# 1. CONFIGURAÇÃO DA PÁGINA E CSS
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="PMCE - Registro de Ocorrência",
@@ -15,79 +16,118 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+if "hora_inicial_default" not in st.session_state:
+    st.session_state["hora_inicial_default"] = datetime.now().time()
+if "data_default" not in st.session_state:
+    st.session_state["data_default"] = datetime.now().date()
+
+# Função para converter imagem local em Base64 (garante exibição no WeasyPrint e no App)
+def get_image_base64(path):
+    if os.path.exists(path):
+        with open(path, "rb") as image_file:
+            encoded = base64.b64encode(image_file.read()).decode()
+            return f"data:image/png;base64,{encoded}"
+    return ""
+
+img_pmce = get_image_base64("logo_pmce.png")
+img_ceara = get_image_base64("logo_ceara.png")
+
 st.markdown("""
 <style>
-    /* Cores Institucionais PMCE */
     :root {
         --verde-oliva: #1B4D3E;
         --azul-marinho: #002B49;
         --dourado: #DAA520;
-        --fundo-cinza: #F4F6F7;
     }
     
     .stApp {
-        background-color: var(--fundo-cinza);
+        background-color: #FFFFFF !important;
     }
     
-    .pmce-header {
-        background-color: var(--verde-oliva);
-        color: white;
-        padding: 20px;
-        border-radius: 8px;
-        text-align: center;
-        border-bottom: 5px solid var(--dourado);
-        margin-bottom: 25px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    .stApp, .stApp p, .stApp label, .stApp span, .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6, .stMarkdown {
+        color: #111111 !important;
     }
     
-    .pmce-header h3 {
-        color: var(--dourado);
-        margin: 0;
-        font-size: 1.1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
+    /* Cabeçalho no Estilo do Documento Oficial */
+    .header-oficial {
+        text-align: left;
+        padding-bottom: 5px;
     }
-    
-    .pmce-header h1 {
-        margin: 5px 0;
-        font-size: 1.8rem;
-        font-weight: 800;
-    }
-    
-    .pmce-header p {
-        margin: 0;
-        font-size: 0.95rem;
-        opacity: 0.9;
-    }
-    
-    .section-box {
-        background-color: white;
-        padding: 20px;
-        border-radius: 8px;
-        border-left: 5px solid var(--azul-marinho);
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    .stButton > button {
-        background-color: var(--verde-oliva);
-        color: white;
+    .header-oficial .unidade {
         font-weight: bold;
-        border: none;
-        padding: 10px 24px;
-        border-radius: 5px;
-        transition: all 0.3s ease;
+        font-size: 1rem;
+        color: #333333;
+        margin: 0;
+    }
+    .header-oficial .endereco {
+        font-size: 0.85rem;
+        color: #666666;
+        margin: 2px 0;
+    }
+    .header-oficial .lema {
+        font-style: italic;
+        font-weight: bold;
+        font-size: 0.9rem;
+        color: #333333;
+        margin-top: 4px;
     }
     
-    .stButton > button:hover {
-        background-color: var(--azul-marinho);
-        color: var(--dourado);
+    /* Barra Colorida Institucional */
+    .faixa-gov {
+        height: 8px;
+        width: 100%;
+        background: linear-gradient(to right, #00A859 25%, #0088CE 25% 50%, #FDC82F 50% 75%, #F37021 75%);
+        margin: 10px 0 20px 0;
+        border-radius: 2px;
+    }
+    
+    /* Container dos Logos Lado a Lado */
+    .logos-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        margin-bottom: 20px;
+    }
+    .logos-container img {
+        height: 75px;
+        object-fit: contain;
+    }
+
+    button[data-baseweb="tab"] {
+        background-color: #F0F4F1 !important;
+        border-radius: 6px 6px 0 0 !important;
+        padding: 10px 20px !important;
+        margin-right: 5px !important;
+    }
+    
+    button[data-baseweb="tab"] p {
+        color: #1B4D3E !important;
+        font-weight: bold !important;
+    }
+    
+    button[aria-selected="true"] {
+        background-color: var(--verde-oliva) !important;
+    }
+    
+    button[aria-selected="true"] p {
+        color: #FFFFFF !important;
+    }
+
+    .stButton > button {
+        background-color: var(--verde-oliva) !important;
+        color: #FFFFFF !important;
+        font-weight: bold !important;
+        border: none !important;
+        padding: 12px 24px !important;
+        border-radius: 6px !important;
+        width: 100%;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# 2. CAMADA DE BANCO DE DADOS (SQLITE)
+# 2. BANCO DE DADOS
 # -----------------------------------------------------------------------------
 DB_FILE = "ocorrencias_pmce.db"
 
@@ -114,7 +154,7 @@ def init_db():
 conn = init_db()
 
 # -----------------------------------------------------------------------------
-# 3. GERADOR DE PDF FORMATADO (WEASYPRINT)
+# 3. GERADOR DE PDF COM O NOVO DESIGN
 # -----------------------------------------------------------------------------
 def gerar_pdf_ocorrencia(d):
     html_content = f"""
@@ -125,10 +165,23 @@ def gerar_pdf_ocorrencia(d):
         <style>
             @page {{ size: A4; margin: 12mm 10mm; }}
             body {{ font-family: Arial, sans-serif; font-size: 8.5pt; color: #111; line-height: 1.2; }}
-            .header {{ border-bottom: 3px solid #1B4D3E; padding-bottom: 6px; text-align: center; margin-bottom: 10px; }}
-            .header-title {{ font-size: 10pt; font-weight: bold; color: #1B4D3E; text-transform: uppercase; }}
-            .header-subtitle {{ font-size: 8.5pt; color: #333; font-weight: bold; margin: 2px 0; }}
-            .header-doc {{ display: inline-block; background-color: #1B4D3E; color: #FFF; font-weight: bold; padding: 4px 12px; font-size: 9.5pt; margin-top: 4px; border-radius: 3px; }}
+            
+            .unidade-header {{ font-size: 9pt; font-weight: bold; color: #222; text-transform: uppercase; }}
+            .end-header {{ font-size: 7.5pt; color: #555; margin-top: 2px; }}
+            .lema-header {{ font-size: 8pt; font-style: italic; font-weight: bold; margin-top: 3px; color: #111; }}
+            
+            .faixa-ceara {{
+                height: 5px;
+                width: 100%;
+                background: linear-gradient(to right, #00A859 25%, #0088CE 25% 50%, #FDC82F 50% 75%, #F37021 75%);
+                margin: 6px 0 12px 0;
+            }}
+            
+            .logos-block {{ text-align: center; margin-bottom: 12px; }}
+            .logos-block img {{ height: 55px; margin: 0 15px; vertical-align: middle; }}
+            
+            .doc-title {{ text-align: center; background-color: #1B4D3E; color: #FFF; font-weight: bold; font-size: 10pt; padding: 5px; margin-bottom: 10px; border-radius: 3px; }}
+            
             .sec-title {{ background-color: #002B49; color: #FFF; font-weight: bold; font-size: 8pt; padding: 3px 6px; margin-top: 8px; margin-bottom: 4px; border-left: 3px solid #DAA520; text-transform: uppercase; }}
             table {{ width: 100%; border-collapse: collapse; margin-bottom: 4px; }}
             td {{ border: 1px solid #CCC; padding: 4px 5px; vertical-align: top; }}
@@ -141,12 +194,21 @@ def gerar_pdf_ocorrencia(d):
         </style>
     </head>
     <body>
-        <div class="header">
-            <div class="header-title">GOVERNO DO ESTADO DO CEARÁ</div>
-            <div class="header-subtitle">SECRETARIA DA SEGURANÇA PÚBLICA E DEFESA SOCIAL</div>
-            <div class="header-subtitle">POLÍCIA MILITAR DO CEARÁ - PMCE</div>
-            <div class="header-doc">RELATÓRIO DE OCORRÊNCIA POLICIAL Nº {d['id']:06d}</div>
+        <div>
+            <div class="unidade-header">1ª COMPANHIA / 18º BATALHÃO POLICIAL MILITAR</div>
+            <div class="end-header">Rua Prof. Armando Farias, s/nº - Pici (IPDI / UFC) - Fortaleza-CE - CEP: 60.440-552</div>
+            <div class="end-header">Telefone: (85) 98485-2398 - E-mail: 18bpm@policiamilitar.ce.gov.br</div>
+            <div class="lema-header">"RAÇA DE FORTES, POVO DE BRAVOS"</div>
         </div>
+
+        <div class="faixa-ceara"></div>
+
+        <div class="logos-block">
+            {"<img src='" + img_pmce + "'>" if img_pmce else ""}
+            {"<img src='" + img_ceara + "'>" if img_ceara else ""}
+        </div>
+
+        <div class="doc-title">RELATÓRIO DE OCORRÊNCIA POLICIAL Nº {d['id']:06d}</div>
 
         <div class="sec-title">01. IDENTIFICAÇÃO E DADOS GERAIS</div>
         <table>
@@ -221,7 +283,7 @@ def gerar_pdf_ocorrencia(d):
         </table>
 
         <div class="sec-title">05. NARRATIVA SUCINTA DA OCORRÊNCIA</div>
-        <div class="box-narrativa">31 - NARRATIVA:\n{d['narrativa']}</div>
+        <div class="box-narrativa">31 - NARRATIVA:<br>{d['narrativa']}</div>
 
         <div class="footer">
             <div class="sig"><strong>{d['condutor']}</strong><br>Condutor da Ocorrência</div>
@@ -233,88 +295,80 @@ def gerar_pdf_ocorrencia(d):
     return HTML(string=html_content).write_pdf()
 
 # -----------------------------------------------------------------------------
-# 4. INTERFACE DO USUÁRIO
+# 4. EXIBIÇÃO NO APLICATIVO
 # -----------------------------------------------------------------------------
-
-# Cabeçalho Institucional
 st.markdown("""
-<div class="pmce-header">
-    <h3>Governo do Estado do Ceará • SSPDS</h3>
-    <h1>POLÍCIA MILITAR DO CEARÁ</h1>
-    <p>Sistema Eletrônico de Registro de Ocorrência Policial (ROP)</p>
+<div class="header-oficial">
+    <div class="unidade">1ª COMPANHIA / 18º BATALHÃO POLICIAL MILITAR</div>
+    <div class="endereco">Rua Prof. Armando Farias, s/nº – Pici (Campus do Pici - UFC) – Fortaleza-CE – CEP: 60.440-552</div>
+    <div class="endereco">Telefone: (85) 98485-2398 – E-mail: 18bpm@policiamilitar.ce.gov.br</div>
+    <div class="lema">"RAÇA DE FORTES, POVO DE BRAVOS"</div>
 </div>
+<div class="faixa-gov"></div>
 """, unsafe_allow_html=True)
+
+if img_pmce or img_ceara:
+    col_l1, col_l2 = st.columns(2)
+    if img_pmce:
+        col_l1.markdown(f'<div style="text-align: right;"><img src="{img_pmce}" style="height:80px;"></div>', unsafe_allow_html=True)
+    if img_ceara:
+        col_l2.markdown(f'<div style="text-align: left;"><img src="{img_ceara}" style="height:80px;"></div>', unsafe_allow_html=True)
 
 tab_registro, tab_admin = st.tabs(["📝 Novo Registro", "🔒 Painel de Controle - Comando"])
 
-# -----------------------------------------------------------------------------
-# ABA 1: NOVO REGISTRO (FORMULÁRIO PÚBLICO COM OS 31 CAMPOS)
-# -----------------------------------------------------------------------------
 with tab_registro:
     st.subheader("Formulário de Cadastramento de Ocorrência")
     
     with st.form("form_ocorrencia", clear_on_submit=True):
         st.markdown("##### 🔹 Seção A - Dados Gerais da Ocorrência")
-        c1, c2, c3, c4 = st.columns([2, 1, 1, 1])
-        unidade = c1.text_input("01 - UNIDADE (CIA/BTL)*", placeholder="Ex: 1º BPM / 1ª CIA - Russas")
-        data_fato = c2.date_input("02 - DATA*", datetime.now()).strftime("%d/%m/%Y")
-        hora_inicial = c3.time_input("03 - HORA INICIAL*", value=datetime.now().time()).strftime("%H:%M")
-        hora_final = c4.time_input("04 - HORA FINAL*", value=datetime.now().time()).strftime("%H:%M")
         
-        c5, c6, c7, c8 = st.columns([2, 1, 1, 1])
-        natureza = c5.text_input("05 - NATUREZA DA OCORRÊNCIA (TIPO/ART.)*", placeholder="Ex: Art. 33 da Lei 11.343/06")
-        vtr = c6.text_input("06 - FRAÇÃO (PREFIXO VTR)*", placeholder="Ex: CP-10112")
-        ht = c7.text_input("07 - Nº DO HT", placeholder="Ex: HT-8842")
-        ciops = c8.text_input("08 - FICHA CIOPS/Nº COPOM", placeholder="Ex: 2026-00482")
+        unidade = st.text_input("01 - UNIDADE (CIA/BTL)*", value="1º BPM / 1ª CIA", key="f_unidade")
+        data_fato = st.date_input("02 - DATA*", value=st.session_state["data_default"], key="f_data").strftime("%d/%m/%Y")
         
-        c9, c10, c11, c12 = st.columns(4)
-        turno = c9.selectbox("09 - TURNO", ["1º Turno (Matutino)", "2º Turno (Vespertino)", "3º Turno (Noturno)", "Extra / Especial"])
-        delegacia = c10.text_input("10 - DELEGACIA DE DESTINO", placeholder="Ex: Delegacia Regional")
-        delegado = c11.text_input("11 - DELEGADO(A)", placeholder="Nome do Delegado(a)")
-        procedimentos = c12.text_input("12 - N°(S) DOS PROCEDIMENTO(S)", placeholder="Ex: IP 452/2026, APFD 882/2026")
+        c_h1, c_h2 = st.columns(2)
+        hora_inicial = c_h1.time_input("03 - HORA INICIAL*", value=st.session_state["hora_inicial_default"], key="f_h_ini").strftime("%H:%M")
+        hora_final = c_h2.time_input("04 - HORA FINAL*", value=time(0, 30), key="f_h_fim").strftime("%H:%M")
+        
+        natureza = st.text_input("05 - NATUREZA DA OCORRÊNCIA (TIPO/ART.)*", key="f_natureza", placeholder="Ex: Art. 33 da Lei 11.343/06")
+        vtr = st.text_input("06 - FRAÇÃO (PREFIXO VTR)*", key="f_vtr", placeholder="Ex: CP-10112")
+        ht = st.text_input("07 - Nº DO HT", key="f_ht", placeholder="Ex: HT-8842")
+        ciops = st.text_input("08 - FICHA CIOPS/Nº COPOM", key="f_ciops", placeholder="Ex: 2026-00482")
+        
+        turno = st.selectbox("09 - TURNO", ["1º Turno (Matutino)", "2º Turno (Vespertino)", "3º Turno (Noturno)", "Extra / Especial"], key="f_turno")
+        delegacia = st.text_input("10 - DELEGACIA DE DESTINO", key="f_delegacia", placeholder="Ex: Delegacia Regional")
+        delegado = st.text_input("11 - DELEGADO(A)", key="f_delegado", placeholder="Nome do Delegado(a)")
+        procedimentos = st.text_input("12 - N°(S) DOS PROCEDIMENTO(S)", key="f_procedimentos", placeholder="Ex: IP 452/2026, APFD 882/2026")
         
         st.markdown("##### 🔹 Seção B - Equipe Policial")
-        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", placeholder="Ex: 3º SGT PM Silva, CB PM Costa, SD PM Lima", height=70)
-        
-        c13, c14 = st.columns(2)
-        condutor = c13.text_input("14 - CONDUTOR (POSTO/GRAD, NOME E MATRÍCULA)*", placeholder="Ex: 3º SGT PM 18.234 Silva (Mat: 123.456-1-X)")
-        testemunhas_policiais = c14.text_input("15 - TESTEMUNHAS POLICIAIS", placeholder="Ex: CB PM 25.109 Costa; SD PM 31.882 Lima")
+        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM Costa, SD PM Lima", height=80)
+        condutor = st.text_input("14 - CONDUTOR (POSTO/GRAD, NOME E MATRÍCULA)*", key="f_condutor", placeholder="Ex: 3º SGT PM 18.234 Silva (Mat: 123.456-1-X)")
+        testemunhas_policiais = st.text_input("15 - TESTEMUNHAS POLICIAIS", key="f_test_pol", placeholder="Ex: CB PM 25.109 Costa; SD PM 31.882 Lima")
         
         st.markdown("##### 🔹 Seção C - Localização e Envolvidos")
-        c15, c16 = st.columns(2)
-        local_ocorrencia = c15.text_input("16 - LOCAL DA OCORRÊNCIA*", placeholder="Endereço completo ou referência")
-        local_abordagem = c16.text_input("17 - LOCAL DA ABORDAGEM*", placeholder="Endereço exato da abordagem")
+        local_ocorrencia = st.text_input("16 - LOCAL DA OCORRÊNCIA*", key="f_loc_oco", placeholder="Endereço completo ou referência")
+        local_abordagem = st.text_input("17 - LOCAL DA ABORDAGEM*", key="f_loc_abo", placeholder="Endereço exato da abordagem")
+        acusado = st.text_input("18 - ACUSADO*", key="f_acusado", placeholder="Nome completo do acusado ou 'A apurar'")
+        vitimas = st.text_input("19 - VÍTIMAS*", key="f_vitimas", placeholder="Nome da vítima ou 'A Sociedade'")
+        testemunhas_povo = st.text_input("26 - TESTEMUNHAS DO POVO", value="Não identificadas no local", key="f_test_povo")
         
-        c17, c18 = st.columns(2)
-        acusado = c17.text_input("18 - ACUSADO*", placeholder="Nome completo do acusado ou 'A apurar'")
-        vitimas = c18.text_input("19 - VÍTIMAS*", placeholder="Nome da vítima ou 'A Sociedade'")
-        
-        c19, c20, c21 = st.columns([2, 1, 1])
-        testemunhas_povo = c19.text_input("26 - TESTEMUNHAS DO POVO", value="Não identificadas no local")
-        ficaram_preso = c20.radio("29 - FICARAM PRESO?*", ["Sim", "Não"], horizontal=True)
-        suspeitos_menores = c21.radio("30 - SUSPEITOS MENORES?*", ["Não", "Sim"], horizontal=True)
+        c_r1, c_r2 = st.columns(2)
+        ficaram_preso = c_r1.radio("29 - FICARAM PRESO?*", ["Sim", "Não"], horizontal=True, key="f_preso")
+        suspeitos_menores = c_r2.radio("30 - SUSPEITOS MENORES?*", ["Não", "Sim"], horizontal=True, key="f_menor")
         
         st.markdown("##### 🔹 Seção D - Apreensões e Bens Recuperados")
-        c22, c23 = st.columns(2)
-        armas = c22.text_input("20 - ARMA(S) APREENDIDA(S)", value="Nenhuma")
-        municao = c23.text_input("21 - MUNIÇÃO APREENDIDA", value="Nenhuma")
-        
-        c24, c25 = st.columns(2)
-        drogas = c24.text_input("22 - DROGA(S) APREENDIDA(S)", value="Nenhuma")
-        veiculos = c25.text_input("23 - VEÍCULO(S) RECUPERADO(S)", value="Nenhum")
-        
-        c26, c27 = st.columns(2)
-        quantia_recuperada = c26.text_input("24 - QUANTIA RECUPERADA", value="R$ 0,00")
-        quantia_apreendida = c27.text_input("25 - QUANTIA APREENDIDA", value="R$ 0,00")
-        
-        c28, c29 = st.columns(2)
-        objetos_recuperados = c28.text_input("27 - OBJETO(S) RECUPERADO(S)", value="Nenhum")
-        objetos_apreendidos = c29.text_input("28 - OBJETO(S) APREENDIDO(S)", value="Nenhum")
+        armas = st.text_input("20 - ARMA(S) APREENDIDA(S)", value="Nenhuma", key="f_armas")
+        municao = st.text_input("21 - MUNIÇÃO APREENDIDA", value="Nenhuma", key="f_municao")
+        drogas = st.text_input("22 - DROGA(S) APREENDIDA(S)", value="Nenhuma", key="f_drogas")
+        veiculos = st.text_input("23 - VEÍCULO(S) RECUPERADO(S)", value="Nenhum", key="f_veiculos")
+        quantia_recuperada = st.text_input("24 - QUANTIA RECUPERADA", value="R$ 0,00", key="f_qnt_rec")
+        quantia_apreendida = st.text_input("25 - QUANTIA APREENDIDA", value="R$ 0,00", key="f_qnt_apr")
+        objetos_recuperados = st.text_input("27 - OBJETO(S) RECUPERADO(S)", value="Nenhum", key="f_obj_rec")
+        objetos_apreendidos = st.text_input("28 - OBJETO(S) APREENDIDO(S)", value="Nenhum", key="f_obj_apr")
         
         st.markdown("##### 🔹 Seção E - Histórico da Ocorrência")
-        narrativa = st.text_area("31 - NARRATIVA SUCINTA DA OCORRÊNCIA*", height=160, placeholder="Resumo claro, cronológico e impessoal do patrulhamento, abordagem, constatação da infração, apreensões e condução...")
+        narrativa = st.text_area("31 - NARRATIVA SUCINTA DA OCORRÊNCIA*", height=160, key="f_narrativa", placeholder="Resumo claro, cronológico e impessoal do patrulhamento, abordagem, constatação da infração, apreensões e condução...")
         
-        btn_submit = st.form_submit_button("🚨 SALVAR E REGISTRAR OCORRÊNCIA", use_container_width=True)
+        btn_submit = st.form_submit_button("🚨 SALVAR E REGISTRAR OCORRÊNCIA")
         
         if btn_submit:
             if not (unidade and natureza and vtr and composicao and condutor and local_ocorrencia and acusado and narrativa):
@@ -341,25 +395,30 @@ with tab_registro:
                 conn.commit()
                 st.success(f"✅ Ocorrência cadastrada com sucesso! Protocolo gerado: Nº {cursor.lastrowid:06d}")
 
-# -----------------------------------------------------------------------------
-# ABA 2: PAINEL DE CONTROLE DO COMANDO (CONSULTA, EDIÇÃO E PDF)
-# -----------------------------------------------------------------------------
 with tab_admin:
     st.subheader("Acesso Restrito ao Comando")
     
-    senha = st.text_input("Insira a Senha de Acesso Administrador", type="password")
+    with st.form("form_login_comando"):
+        senha = st.text_input("Insira a Senha de Acesso Administrador", type="password", key="f_senha_adm")
+        btn_entrar = st.form_submit_button("🔓 ENTRAR NO PAINEL")
     
-    if senha == "comando2026":  # Defina a senha desejada aqui
+    if btn_entrar:
+        if senha == "comando2026":
+            st.session_state["autenticado"] = True
+        else:
+            st.error("Senha incorreta. Acesso negado.")
+            st.session_state["autenticado"] = False
+
+    if st.session_state.get("autenticado", False):
         st.success("Autenticação realizada com sucesso!")
-        
         df = pd.read_sql_query("SELECT * FROM ocorrências ORDER BY id DESC", conn)
         
         if not df.empty:
             st.markdown("### 🔍 Pesquisa e Filtros")
             c_f1, c_f2, c_f3 = st.columns(3)
-            filtro_vtr = c_f1.text_input("Filtrar por Viatura (VTR)")
-            filtro_acusado = c_f2.text_input("Filtrar por Acusado")
-            filtro_unidade = c_f3.text_input("Filtrar por Unidade")
+            filtro_vtr = c_f1.text_input("Filtrar por Viatura (VTR)", key="f_filt_vtr")
+            filtro_acusado = c_f2.text_input("Filtrar por Acusado", key="f_filt_acu")
+            filtro_unidade = c_f3.text_input("Filtrar por Unidade", key="f_filt_uni")
             
             df_filtered = df.copy()
             if filtro_vtr:
@@ -376,17 +435,13 @@ with tab_admin:
             
             st.markdown("---")
             st.markdown("### ✏️ Gerenciar Ocorrência Específica")
-            
-            id_selecionado = st.number_input("Informe o Número do Protocolo (ID)", min_value=1, max_value=int(df['id'].max()), step=1)
-            
+            id_selecionado = st.number_input("Informe o Número do Protocolo (ID)", min_value=1, max_value=int(df['id'].max()), step=1, key="f_id_sel")
             ocorrencia_row = df[df['id'] == id_selecionado]
             
             if not ocorrencia_row.empty:
                 d = ocorrencia_row.iloc[0].to_dict()
-                
                 col_btn1, col_btn2 = st.columns(2)
                 
-                # Botão de Exportação para PDF
                 with col_btn1:
                     pdf_data = gerar_pdf_ocorrencia(d)
                     st.download_button(
@@ -394,9 +449,31 @@ with tab_admin:
                         data=pdf_data,
                         file_name=f"Relatorio_PMCE_{d['id']:06d}.pdf",
                         mime="application/pdf",
-                        use_container_width=True
+                        use_container_width=True,
+                        key="f_btn_pdf"
                     )
                 
-                # Formulário de Edição/Alteração
                 with col_btn2:
                     st.info(f"Ocorrência Selecionada: Protocolo #{d['id']:06d}")
+                
+                with st.expander("🛠️ Clique para EDITAR os campos desta ocorrência"):
+                    with st.form("edit_form"):
+                        e_unidade = st.text_input("Unidade", value=d['unidade'], key="e_uni")
+                        e_natureza = st.text_input("Natureza", value=d['natureza'], key="e_nat")
+                        e_procedimentos = st.text_input("Procedimentos", value=d['procedimentos'], key="e_proc")
+                        e_acusado = st.text_input("Acusado", value=d['acusado'], key="e_acu")
+                        e_narrativa = st.text_area("Narrativa", value=d['narrativa'], height=120, key="e_nar")
+                        
+                        btn_salvar_edicao = st.form_submit_button("Salvar Alterações no Banco de Dados")
+                        if btn_salvar_edicao:
+                            cursor = conn.cursor()
+                            cursor.execute('''
+                                UPDATE ocorrências 
+                                SET unidade=?, natureza=?, procedimentos=?, acusado=?, narrativa=? 
+                                WHERE id=?
+                            ''', (e_unidade, e_natureza, e_procedimentos, e_acusado, e_narrativa, id_selecionado))
+                            conn.commit()
+                            st.success("Ocorrência alterada com sucesso!")
+                            st.rerun()
+        else:
+            st.info("Nenhuma ocorrência registrada até o momento.")
