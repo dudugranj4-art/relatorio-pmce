@@ -274,7 +274,7 @@ def gerar_pdf_ocorrencia(d):
 </html>
 """
     return HTML(string=html_content).write_pdf()
-
+    
 def gerar_pdf_ranking(df_ranking):
     data_atual = datetime.now().strftime("%d/%m/%Y %H:%M")
     img_pmce_html = f"<img src='{img_pmce}'>" if img_pmce else ""
