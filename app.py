@@ -405,24 +405,25 @@ with tab_registro:
     with st.form("form_ocorrencia", clear_on_submit=True):
         st.markdown("##### 🔹 Seção A - Dados Gerais da Ocorrência")
         
-        equipe = st.selectbox("""DESIGNAÇÃO DA EQUIPE*""", ["Equipe Alfa", "Equipe Bravo", "Equipe Charlie", "Equipe Delta"], key="f_equipe")
-        unidade = st.text_input("""01 - UNIDADE (CIA/BTL)*""", value="1º BPM / 1ª CIA", key="f_unidade")
-        data_fato = st.date_input("""02 - DATA*""", value=st.session_state["data_default"], key="f_data").strftime("%d/%m/%Y")
+        equipe = st.selectbox("DESIGNAÇÃO DA EQUIPE*", ["Equipe Alfa", "Equipe Bravo", "Equipe Charlie", "Equipe Delta"], key="f_equipe")
+        unidade = st.text_input("01 - UNIDADE (CIA/BTL)*", value="1º BPM / 1ª CIA", key="f_unidade")
+        data_fato = st.date_input("02 - DATA*", value=st.session_state["data_default"], key="f_data").strftime("%d/%m/%Y")
         
         c_h1, c_h2 = st.columns(2)
-        hora_inicial = c_h1.time_input("""03 - HORA INICIAL*""", value=st.session_state["hora_inicial_default"], key="f_h_ini").strftime("%H:%M")
-        hora_final = c_h2.time_input("""04 - HORA FINAL*""", value=time(0, 30), key="f_h_fim").strftime("%H:%M")
+        hora_inicial = c_h1.time_input("03 - HORA INICIAL*", value=st.session_state["hora_inicial_default"], key="f_h_ini").strftime("%H:%M")
+        hora_final = c_h2.time_input("04 - HORA FINAL*", value=time(0, 30), key="f_h_fim").strftime("%H:%M")
         
-        natureza = st.selectbox("""05 - NATUREZA DA OCORRÊNCIA*""", opcoes_natureza, key="f_natureza")
+        natureza = st.selectbox("05 - NATUREZA DA OCORRÊNCIA*", opcoes_natureza, key="f_natureza")
         
-        vtr = st.text_input("""06 - FRAÇÃO (PREFIXO VTR)*""", key="f_vtr", placeholder="Ex: CP-10112")
-        ht = st.text_input("""07 - Nº DO HT""", key="f_ht", placeholder="Ex: HT-8842")
-        ciops = st.text_input("""08 - FICHA CIOPS/Nº COPOM""", key="f_ciops", placeholder="Ex: 2026-00482")
+        vtr = st.text_input("06 - FRAÇÃO (PREFIXO VTR)*", key="f_vtr", placeholder="Ex: CP-10112")
+        ht = st.text_input("07 - Nº DO HT", key="f_ht", placeholder="Ex: HT-8842")
+        ciops = st.text_input("08 - FICHA CIOPS/Nº COPOM", key="f_ciops", placeholder="Ex: 2026-00482")
         
-        turno = st.selectbox("""09 - TURNO""", ["1º Turno (Matutino)", "2º Turno (Vespertino)", "3º Turno (Noturno)", "Extra / Especial"], key="f_turno")
-        delegacia = st.text_input("""10 - DELEGACIA DE DESTINO""", key="f_delegacia", placeholder="Ex: Delegacia Regional")
-        delegado = st.text_input("""11 - DELEGADO(A)""", key="f_delegado", placeholder="Nome do Delegado(a)")
-        procedimentos = st.text_input("""12 - N°(S) DOS PROCEDIMENTO(S)""", key="f_procedimentos", placeholder="Ex: IP 452/2026, Mandado de Prisão")
+        turno = st.selectbox("09 - TURNO", ["1º Turno (Matutino)", "2º Turno (Vespertino)", "3º Turno (Noturno)", "Extra / Especial"], key="f_turno")
+        delegacia = st.text_input("10 - DELEGACIA DE DESTINO", key="f_delegacia", placeholder="Ex: Delegacia Regional")
+        delegado = st.text_input("11 - DELEGADO(A)", key="f_delegado", placeholder="Nome do Delegado(a)")
+        procedimentos = st.text_input("12 - N°(S) DOS PROCEDIMENTO(S)", key="f_procedimentos", placeholder="Ex: IP 452/2026, Mandado de Prisão")
         
         st.markdown("##### 🔹 Seção B - Equipe Policial")
-        composicao = st.text_area("""13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*""", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM Costa, SD P
+        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM Costa, SD PM Lima", height=80)
+        condutor = st.text_input("14
