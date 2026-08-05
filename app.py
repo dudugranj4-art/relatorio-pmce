@@ -288,7 +288,7 @@ def gerar_pdf_ranking(df_ranking):
     rows_html = ""
     for idx, row in df_ranking.iterrows():
         pos = idx + 1
-         medalha = "🥇" if pos == 1 else ("🥈" if pos == 2 else ("🥉" if pos == 3 else f"{pos}º"))
+        medalha = "🥇" if pos == 1 else ("🥈" if pos == 2 else ("🥉" if pos == 3 else f"{pos}º"))
         rows_html += f"""
         <tr>
             <td style="text-align:center; font-weight:bold; font-size:10pt;">{medalha}</td>
