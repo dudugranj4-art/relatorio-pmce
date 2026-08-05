@@ -91,7 +91,7 @@ st.markdown("""
     }
     
     button[aria-selected="true"] {
-        background-color: var(--verde-oliva) !important;
+        background-color: #1B4D3E !important;
     }
     
     button[aria-selected="true"] p {
@@ -99,7 +99,7 @@ st.markdown("""
     }
 
     .stButton > button {
-        background-color: var(--verde-oliva) !important;
+        background-color: #1B4D3E !important;
         color: #FFFFFF !important;
         font-weight: bold !important;
         border: none !important;
@@ -118,8 +118,8 @@ DB_FILE = "ocorrencias_pmce.db"
 def init_db():
     conn = sqlite3.connect(DB_FILE, check_same_thread=False)
     cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS ocorrências (
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ocorrencias (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             unidade TEXT, data_fato TEXT, hora_inicial TEXT, hora_final TEXT,
             natureza TEXT, vtr TEXT, ht TEXT, ciops TEXT, turno TEXT,
@@ -131,9 +131,9 @@ def init_db():
             objetos_apreendidos TEXT, ficaram_preso TEXT, suspeitos_menores TEXT,
             narrativa TEXT, data_registro TEXT, equipe TEXT
         )
-    ''')
+    """)
     try:
-        cursor.execute("ALTER TABLE ocorrências ADD COLUMN equipe TEXT DEFAULT 'Equipe Alfa'")
+        cursor.execute("ALTER TABLE ocorrencias ADD COLUMN equipe TEXT DEFAULT 'Equipe Alfa'")
     except sqlite3.OperationalError:
         pass
     conn.commit()
@@ -285,14 +285,7 @@ def gerar_pdf_ranking(df_ranking):
     rows_html = ""
     for idx, row in df_ranking.iterrows():
         pos = idx + 1
-        if pos == 1:
-            medalha = "1º"
-        elif pos == 2:
-            medalha = "2º"
-        elif pos == 3:
-            medalha = "3º"
-        else:
-            medalha = f"{pos}º"
+        medalha = f"{pos}º"
 
         rows_html += f"""
         <tr>
@@ -403,13 +396,33 @@ with tab_registro:
     with st.form("form_ocorrencia", clear_on_submit=True):
         st.markdown("##### 🔹 Seção A - Dados Gerais da Ocorrência")
         
-        equipe = st.selectbox("DESIGNAÇÃO DA EQUIPE*", ["Equipe Alfa", "Equipe Bravo", "Equipe Charlie", "Equipe Delta"], key="f_equipe")
-        unidade = st.text_input("01 - UNIDADE (CIA/BTL)*", value="1º BPM / 1ª CIA", key="f_unidade")
-        data_fato = st.date_input("02 - DATA*", value=st.session_state["data_default"], key="f_data").strftime("%d/%m/%Y")
+        equipe = st.selectbox(
+            "DESIGNAÇÃO DA EQUIPE*",
+            ["Equipe Alfa", "Equipe Bravo", "Equipe Charlie", "Equipe Delta"],
+            key="f_equipe"
+        )
+        unidade = st.text_input(
+            "01 - UNIDADE (CIA/BTL)*",
+            value="1º BPM / 1ª CIA",
+            key="f_unidade"
+        )
+        data_fato = st.date_input(
+            "02 - DATA*",
+            value=st.session_state["data_default"],
+            key="f_data"
+        ).strftime("%d/%m/%Y")
         
         c_h1, c_h2 = st.columns(2)
-        hora_inicial = c_h1.time_input("03 - HORA INICIAL*", value=st.session_state["hora_inicial_default"], key="f_h_ini").strftime("%H:%M")
-        hora_final = c_h2.time_input("04 - HORA FINAL*", value=time(0, 30), key="f_h_fim").strftime("%H:%M")
+        hora_inicial = c_h1.time_input(
+            "03 - HORA INICIAL*",
+            value=st.session_state["hora_inicial_default"],
+            key="f_h_ini"
+        ).strftime("%H:%M")
+        hora_final = c_h2.time_input(
+            "04 - HORA FINAL*",
+            value=time(0, 30),
+            key="f_h_fim"
+        ).strftime("%H:%M")
         
         natureza = st.selectbox(
             "05 - NATUREZA DA OCORRÊNCIA*",
@@ -421,11 +434,20 @@ with tab_registro:
         ht = st.text_input("07 - Nº DO HT", key="f_ht", placeholder="Ex: HT-8842")
         ciops = st.text_input("08 - FICHA CIOPS/Nº COPOM", key="f_ciops", placeholder="Ex: 2026-00482")
         
-        turno = st.selectbox("09 - TURNO", ["1º Turno (Matutino)", "2º Turno (Vespertino)", "3º Turno (Noturno)", "Extra / Especial"], key="f_turno")
+        turno = st.selectbox(
+            "09 - TURNO",
+            ["1º Turno (Matutino)", "2º Turno (Vespertino)", "3º Turno (Noturno)", "Extra / Especial"],
+            key="f_turno"
+        )
         delegacia = st.text_input("10 - DELEGACIA DE DESTINO", key="f_delegacia", placeholder="Ex: Delegacia Regional")
         delegado = st.text_input("11 - DELEGADO(A)", key="f_delegado", placeholder="Nome do Delegado(a)")
-        procedimentos = st.text_input("12 - N°(S) DOS PROCEDIMENTO(S)", key="f_procedimentos", placeholder="Ex: IP 452/2026, Mandado de Prisão")
+        procedimentos = st.text_input(
+            "12 - N°(S) DOS PROCEDIMENTO(S)",
+            key="f_procedimentos",
+            placeholder="Ex: IP 452/2026, Mandado de Prisão"
+        )
         
         st.markdown("##### 🔹 Seção B - Equipe Policial")
-        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM Costa, SD PM Lima", height=80)
-        condutor = st.text_input("14 - CONDUTOR (POSTO/GRAD, NOME 
+        composicao = st.text_area(
+            "13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*",
+          
