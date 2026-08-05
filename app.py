@@ -558,7 +558,7 @@ st.download_button(
         )
         
 st.markdown("---")
-        if not df.empty:
+           if not df.empty:
             st.markdown("### 🔍 Pesquisa e Filtros de Ocorrências")
             c_f1, c_f2, c_f3 = st.columns(3)
             filtro_vtr = c_f1.text_input("Filtrar por Viatura (VTR)", key="f_filt_vtr")
