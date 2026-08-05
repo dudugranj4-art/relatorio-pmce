@@ -426,4 +426,4 @@ with tab_registro:
         
         st.markdown("##### 🔹 Seção B - Equipe Policial")
         composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM Costa, SD PM Lima", height=80)
-        condutor = st.text_input("14)
+        condutor = st.text_input("14
