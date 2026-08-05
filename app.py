@@ -545,10 +545,7 @@ with tab_admin:
         st.bar_chart(chart_data)
 
         st.markdown("### 📋 Tabela Detalhada do Ranking")
-        st.dataframe(
-            df_ranking.style.background_gradient(subset=["Pontuação Total"], cmap="Greens"),
-            use_container_width=True
-        )
+st.dataframe(df_ranking, use_container_width=True)
 
         pdf_ranking_bytes = gerar_pdf_ranking(df_ranking)
         st.download_button(
