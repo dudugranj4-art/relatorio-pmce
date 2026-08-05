@@ -6,9 +6,6 @@ from weasyprint import HTML
 import base64
 import os
 
-# -----------------------------------------------------------------------------
-# 1. CONFIGURAÇÃO DA PÁGINA E CSS
-# -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="PMCE - Registro de Ocorrência",
     page_icon="🛡️",
@@ -108,7 +105,6 @@ st.markdown("""
         width: 100%;
     }
     
-    /* Botão de excluir em vermelho */
     .btn-excluir > button {
         background-color: #B22222 !important;
     }
@@ -118,9 +114,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------------------------------------------------------
-# 2. BANCO DE DADOS
-# -----------------------------------------------------------------------------
 DB_FILE = "ocorrencias_pmce.db"
 
 def init_db():
@@ -149,9 +142,6 @@ def init_db():
 
 conn = init_db()
 
-# -----------------------------------------------------------------------------
-# 3. GERADORES DE PDF (WEASYPRINT)
-# -----------------------------------------------------------------------------
 def gerar_pdf_ocorrencia(d):
     equipe_val = d.get('equipe', 'N/I')
     img_pmce_html = f"<img src='{img_pmce}'>" if img_pmce else ""
@@ -381,9 +371,6 @@ def gerar_pdf_ranking(df_ranking):
 """
     return HTML(string=html_content).write_pdf()
 
-# -----------------------------------------------------------------------------
-# 4. EXIBIÇÃO NO APLICATIVO
-# -----------------------------------------------------------------------------
 st.markdown("""
 <div class="header-oficial">
     <div class="unidade">1ª COMPANHIA / 18º BATALHÃO POLICIAL MILITAR</div>
@@ -431,4 +418,11 @@ with tab_registro:
         procedimentos = st.text_input("12 - N°(S) DOS PROCEDIMENTO(S)", key="f_procedimentos", placeholder="Ex: IP 452/2026, Mandado de Prisão")
         
         st.markdown("##### 🔹 Seção B - Equipe Policial")
-        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex
+        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM Costa, SD PM Lima", height=80)
+        condutor = st.text_input("14 - CONDUTOR (POSTO/GRAD, NOME E MATRÍCULA)*", key="f_condutor", placeholder="Ex: 3º SGT PM 18.234 Silva (Mat: 123.456-1-X)")
+        testemunhas_policiais = st.text_input("15 - TESTEMUNHAS POLICIAIS", key="f_test_pol", placeholder="Ex: CB PM 25.109 Costa; SD PM 31.882 Lima")
+        
+        st.markdown("##### 🔹 Seção C - Localização e Envolvidos")
+        local_ocorrencia = st.text_input("16 - LOCAL DA OCORRÊNCIA*", key="f_loc_oco", placeholder="Endereço completo ou referência")
+        local_abordagem = st.text_input("17 - LOCAL DA ABORDAGEM*", key="f_loc_abo", placeholder="Endereço exato da abordagem")
+        acusado = st.text_input("18 - ACUSADO*", key="f_acusado", placeholder="Nome comple
