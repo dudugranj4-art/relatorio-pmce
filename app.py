@@ -274,7 +274,7 @@ def gerar_pdf_ocorrencia(d):
 </html>
 """
     return HTML(string=html_content).write_pdf()
-    
+
 def gerar_pdf_ranking(df_ranking):
     data_atual = datetime.now().strftime("%d/%m/%Y %H:%M")
     img_pmce_html = f"<img src='{img_pmce}'>" if img_pmce else ""
@@ -545,10 +545,10 @@ with tab_admin:
         st.bar_chart(chart_data)
 
         st.markdown("### 📋 Tabela Detalhada do Ranking")
-st.dataframe(df_ranking, use_container_width=True)
+        st.dataframe(df_ranking, use_container_width=True)
 
-pdf_ranking_bytes = gerar_pdf_ranking(df_ranking)
-st.download_button(
+        pdf_ranking_bytes = gerar_pdf_ranking(df_ranking)
+        st.download_button(
             label="📄 BAIXAR RELATÓRIO ESTATÍSTICO DE RANKING EM PDF",
             data=pdf_ranking_bytes,
             file_name=f"Ranking_Equipes_PMCE_{datetime.now().strftime('%d_%m_%Y')}.pdf",
@@ -557,8 +557,8 @@ st.download_button(
             key="btn_pdf_ranking"
         )
         
-st.markdown("---")
-           if not df.empty:
+        st.markdown("---")
+        if not df.empty:
             st.markdown("### 🔍 Pesquisa e Filtros de Ocorrências")
             c_f1, c_f2, c_f3 = st.columns(3)
             filtro_vtr = c_f1.text_input("Filtrar por Viatura (VTR)", key="f_filt_vtr")
