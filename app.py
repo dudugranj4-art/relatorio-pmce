@@ -142,7 +142,7 @@ def init_db():
 conn = init_db()
 
 # -----------------------------------------------------------------------------
-# 3. GERADORES DE PDF
+# 3. GERADORES DE PDF (WEASYPRINT)
 # -----------------------------------------------------------------------------
 def gerar_pdf_ocorrencia(d):
     equipe_val = d.get('equipe', 'N/I')
@@ -202,7 +202,7 @@ def gerar_pdf_ocorrencia(d):
             <td width="22.5%"><span class="lbl">04 - HORA FINAL</span><span class="val">{d['hora_final']}</span></td>
         </tr>
         <tr>
-            <td colspan="2"><span class="lbl">05 - NATUREZA DA OCORRÊNCIA</span><span class="val">{d['natureza']}</span></td>
+            <td colspan="2"><span class="lbl">05 - NATUREZA DA OCORRÊNCIA</span><span class="val"><strong>{d['natureza']}</strong></span></td>
             <td class="bg"><span class="lbl">06 - FRAÇÃO / PREFIXO VTR</span><span class="val">{d['vtr']}</span></td>
             <td><span class="lbl">07 - DESIGNAÇÃO DA EQUIPE</span><span class="val"><strong>{equipe_val}</strong></span></td>
         </tr>
@@ -299,9 +299,11 @@ def gerar_pdf_ranking(df_ranking):
             <td style="text-align:center; font-weight:bold; font-size:10pt;">{medalha}</td>
             <td style="font-weight:bold;">{row['Equipe']}</td>
             <td style="text-align:center;">{row['Total de Ocorrências']}</td>
-            <td style="text-align:center;">{row['Tráfico de Drogas']}</td>
-            <td style="text-align:center;">{row['Armas Apreendidas']}</td>
-            <td style="text-align:center;">{row['Mandados Cump.']}</td>
+            <td style="text-align:center;">{row['Tráfico']}</td>
+            <td style="text-align:center;">{row['Apreensão de Arma']}</td>
+            <td style="text-align:center;">{row['Mandado']}</td>
+            <td style="text-align:center;">{row['Intervenção']}</td>
+            <td style="text-align:center;">{row['Outros']}</td>
             <td style="text-align:center; font-weight:bold; color:#1B4D3E;">{row['Pontuação Total']}</td>
         </tr>
         """
@@ -312,7 +314,7 @@ def gerar_pdf_ranking(df_ranking):
     <meta charset="UTF-8">
     <style>
         @page {{ size: A4; margin: 12mm 10mm; }}
-        body {{ font-family: Arial, sans-serif; font-size: 9pt; color: #111; line-height: 1.3; }}
+        body {{ font-family: Arial, sans-serif; font-size: 8.5pt; color: #111; line-height: 1.3; }}
         .unidade-header {{ font-size: 9pt; font-weight: bold; color: #222; text-transform: uppercase; }}
         .end-header {{ font-size: 7.5pt; color: #555; margin-top: 2px; }}
         .lema-header {{ font-size: 8pt; font-style: italic; font-weight: bold; margin-top: 3px; color: #111; }}
@@ -325,8 +327,8 @@ def gerar_pdf_ranking(df_ranking):
         .logos-block img {{ height: 50px; margin: 0 15px; vertical-align: middle; }}
         .doc-title {{ text-align: center; background-color: #002B49; color: #FFF; font-weight: bold; font-size: 11pt; padding: 6px; margin-bottom: 15px; border-radius: 3px; border-bottom: 3px solid #DAA520; }}
         table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
-        th {{ background-color: #1B4D3E; color: white; padding: 6px; font-size: 8pt; text-transform: uppercase; border: 1px solid #1B4D3E; }}
-        td {{ border: 1px solid #CCC; padding: 6px; font-size: 8.5pt; }}
+        th {{ background-color: #1B4D3E; color: white; padding: 5px; font-size: 7.5pt; text-transform: uppercase; border: 1px solid #1B4D3E; }}
+        td {{ border: 1px solid #CCC; padding: 5px; font-size: 8pt; }}
         tr:nth-child(even) {{ background-color: #F9F9F9; }}
         .footer {{ margin-top: 30px; font-size: 8pt; color: #666; text-align: right; border-top: 1px solid #EEE; padding-top: 5px; }}
     </style>
@@ -349,13 +351,15 @@ def gerar_pdf_ranking(df_ranking):
     <table>
         <thead>
             <tr>
-                <th width="8%">POS</th>
-                <th width="28%">EQUIPE</th>
-                <th width="14%">OCORRÊNCIAS</th>
-                <th width="13%">TRÁFICO</th>
-                <th width="13%">ARMAS</th>
-                <th width="12%">MANDADOS</th>
-                <th width="12%">PONTUAÇÃO</th>
+                <th width="6%">POS</th>
+                <th width="20%">EQUIPE</th>
+                <th width="12%">OCORRÊNCIAS</th>
+                <th width="10%">TRÁFICO</th>
+                <th width="12%">ARMAS</th>
+                <th width="10%">MANDADOS</th>
+                <th width="12%">INTERVENÇÃO</th>
+                <th width="8%">OUTROS</th>
+                <th width="10%">PONTUAÇÃO</th>
             </tr>
         </thead>
         <tbody>
@@ -393,6 +397,8 @@ if img_pmce or img_ceara:
 
 tab_registro, tab_admin = st.tabs(["📝 Novo Registro", "🔒 Painel de Controle - Comando"])
 
+opcoes_natureza = ["Tráfico", "Apreensão de arma", "Mandado", "Intervenção", "Outros"]
+
 with tab_registro:
     st.subheader("Formulário de Cadastramento de Ocorrência")
     
@@ -407,7 +413,9 @@ with tab_registro:
         hora_inicial = c_h1.time_input("03 - HORA INICIAL*", value=st.session_state["hora_inicial_default"], key="f_h_ini").strftime("%H:%M")
         hora_final = c_h2.time_input("04 - HORA FINAL*", value=time(0, 30), key="f_h_fim").strftime("%H:%M")
         
-        natureza = st.text_input("05 - NATUREZA DA OCORRÊNCIA (TIPO/ART.)*", key="f_natureza", placeholder="Ex: Art. 33 da Lei 11.343/06 (Tráfico de Drogas)")
+        # ALTERAÇÃO DO ITEM 05: SELEÇÃO DA NATUREZA DA OCORRÊNCIA
+        natureza = st.selectbox("05 - NATUREZA DA OCORRÊNCIA*", opcoes_natureza, key="f_natureza")
+        
         vtr = st.text_input("06 - FRAÇÃO (PREFIXO VTR)*", key="f_vtr", placeholder="Ex: CP-10112")
         ht = st.text_input("07 - Nº DO HT", key="f_ht", placeholder="Ex: HT-8842")
         ciops = st.text_input("08 - FICHA CIOPS/Nº COPOM", key="f_ciops", placeholder="Ex: 2026-00482")
@@ -418,7 +426,4 @@ with tab_registro:
         procedimentos = st.text_input("12 - N°(S) DOS PROCEDIMENTO(S)", key="f_procedimentos", placeholder="Ex: IP 452/2026, Mandado de Prisão")
         
         st.markdown("##### 🔹 Seção B - Equipe Policial")
-        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM Costa, SD PM Lima", height=80)
-        condutor = st.text_input("14 - CONDUTOR (POSTO/GRAD, NOME E MATRÍCULA)*", key="f_condutor", placeholder="Ex: 3º SGT PM 18.234 Silva (Mat: 123.456-1-X)")
-        testemunhas_policiais = st.text_input("15 - TESTEMUNHAS POLICIAIS", key="f_test_pol", placeholder="Ex: CB PM 25.109 Costa; SD PM 31.882 Lima")
- 
+        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM C
