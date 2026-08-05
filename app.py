@@ -413,7 +413,6 @@ with tab_registro:
         hora_inicial = c_h1.time_input("03 - HORA INICIAL*", value=st.session_state["hora_inicial_default"], key="f_h_ini").strftime("%H:%M")
         hora_final = c_h2.time_input("04 - HORA FINAL*", value=time(0, 30), key="f_h_fim").strftime("%H:%M")
         
-        # ALTERAÇÃO DO ITEM 05: SELEÇÃO DA NATUREZA DA OCORRÊNCIA
         natureza = st.selectbox("05 - NATUREZA DA OCORRÊNCIA*", opcoes_natureza, key="f_natureza")
         
         vtr = st.text_input("06 - FRAÇÃO (PREFIXO VTR)*", key="f_vtr", placeholder="Ex: CP-10112")
@@ -426,4 +425,5 @@ with tab_registro:
         procedimentos = st.text_input("12 - N°(S) DOS PROCEDIMENTO(S)", key="f_procedimentos", placeholder="Ex: IP 452/2026, Mandado de Prisão")
         
         st.markdown("##### 🔹 Seção B - Equipe Policial")
-        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM C
+        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM Costa, SD PM Lima", height=80)
+        condutor = st.text_input("14
