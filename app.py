@@ -547,8 +547,8 @@ with tab_admin:
         st.markdown("### 📋 Tabela Detalhada do Ranking")
 st.dataframe(df_ranking, use_container_width=True)
 
-        pdf_ranking_bytes = gerar_pdf_ranking(df_ranking)
-        st.download_button(
+pdf_ranking_bytes = gerar_pdf_ranking(df_ranking)
+st.download_button(
             label="📄 BAIXAR RELATÓRIO ESTATÍSTICO DE RANKING EM PDF",
             data=pdf_ranking_bytes,
             file_name=f"Ranking_Equipes_PMCE_{datetime.now().strftime('%d_%m_%Y')}.pdf",
