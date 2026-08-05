@@ -557,7 +557,7 @@ st.download_button(
             key="btn_pdf_ranking"
         )
         
-        st.markdown("---")
+st.markdown("---")
         if not df.empty:
             st.markdown("### 🔍 Pesquisa e Filtros de Ocorrências")
             c_f1, c_f2, c_f3 = st.columns(3)
