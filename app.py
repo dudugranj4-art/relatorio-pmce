@@ -450,5 +450,9 @@ with tab_registro:
         st.markdown("##### 🔹 Seção B - Equipe Policial")
         composicao = st.text_area(
         )
-         "13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*",
+         composicao = st.text_area(
+             "13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*",
+    height=150
+)
+
           
