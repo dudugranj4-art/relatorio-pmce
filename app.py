@@ -423,6 +423,6 @@ with tab_registro:
         testemunhas_policiais = st.text_input("15 - TESTEMUNHAS POLICIAIS", key="f_test_pol", placeholder="Ex: CB PM 25.109 Costa; SD PM 31.882 Lima")
         
         st.markdown("##### 🔹 Seção C - Localização e Envolvidos")
-        local_ocorrencia = st.text_input("16 - LOCAL DA OCORRÊNCIA*", key="f_loc_oco", placeholder="Endereço completo ou referência")
-        local_abordagem = st.text_input("17 - LOCAL DA ABORDAGEM*", key="f_loc_abo", placeholder="Endereço exato da abordagem")
+        local_ocorrencia = st.text_input("16 - LOCAL DA OCORRÊNCIA*", key="f_loc_oco", placeholder="Endereco completo ou referencia")
+        local_abordagem = st.text_input("17 - LOCAL DA ABORDAGEM*", key="f_loc_abo", placeholder="Endereco exato da abordagem")
         acusado = st.text_input("18 - ACUSADO*", key="f_acusado", placeholder="Nome comple
