@@ -370,3 +370,274 @@ def gerar_pdf_ranking(df_ranking):
 </html>
 """
     return HTML(string=html_content).write_pdf()
+st.markdown("""
+<div class="header-oficial">
+    <div class="unidade">1ª COMPANHIA / 18º BATALHÃO POLICIAL MILITAR</div>
+    <div class="endereco">Rua Prof. Armando Farias, s/nº – Pici (Campus do Pici - UFC) – Fortaleza-CE – CEP: 60.440-552</div>
+    <div class="endereco">Telefone: (85) 98485-2398 – E-mail: 18bpm@policiamilitar.ce.gov.br</div>
+    <div class="lema">"RAÇA DE FORTES, POVO DE BRAVOS"</div>
+</div>
+<div class="faixa-gov"></div>
+""", unsafe_allow_html=True)
+
+if img_pmce or img_ceara:
+    col_l1, col_l2 = st.columns(2)
+    if img_pmce:
+        col_l1.markdown(f'<div style="text-align: right;"><img src="{img_pmce}" style="height:80px;"></div>', unsafe_allow_html=True)
+    if img_ceara:
+        col_l2.markdown(f'<div style="text-align: left;"><img src="{img_ceara}" style="height:80px;"></div>', unsafe_allow_html=True)
+
+tab_registro, tab_admin = st.tabs(["📝 Novo Registro", "🔒 Painel de Controle - Comando"])
+
+opcoes_natureza = ["Tráfico", "Apreensão de arma", "Mandado", "Intervenção", "Outros"]
+
+with tab_registro:
+    st.subheader("Formulário de Cadastramento de Ocorrência")
+    
+    with st.form("form_ocorrencia", clear_on_submit=True):
+        st.markdown("##### 🔹 Seção A - Dados Gerais da Ocorrência")
+        
+        equipe = st.selectbox("DESIGNAÇÃO DA EQUIPE*", ["Equipe Alfa", "Equipe Bravo", "Equipe Charlie", "Equipe Delta"], key="f_equipe")
+        unidade = st.text_input("01 - UNIDADE (CIA/BTL)*", value="1º BPM / 1ª CIA", key="f_unidade")
+        data_fato = st.date_input("02 - DATA*", value=st.session_state["data_default"], key="f_data").strftime("%d/%m/%Y")
+        
+        c_h1, c_h2 = st.columns(2)
+        hora_inicial = c_h1.time_input("03 - HORA INICIAL*", value=st.session_state["hora_inicial_default"], key="f_h_ini").strftime("%H:%M")
+        hora_final = c_h2.time_input("04 - HORA FINAL*", value=time(0, 30), key="f_h_fim").strftime("%H:%M")
+        
+        natureza = st.selectbox("05 - NATUREZA DA OCORRÊNCIA*", opcoes_natureza, key="f_natureza")
+        
+        vtr = st.text_input("06 - FRAÇÃO (PREFIXO VTR)*", key="f_vtr", placeholder="Ex: CP-10112")
+        ht = st.text_input("07 - Nº DO HT", key="f_ht", placeholder="Ex: HT-8842")
+        ciops = st.text_input("08 - FICHA CIOPS/Nº COPOM", key="f_ciops", placeholder="Ex: 2026-00482")
+        
+        turno = st.selectbox("09 - TURNO", ["1º Turno (Matutino)", "2º Turno (Vespertino)", "3º Turno (Noturno)", "Extra / Especial"], key="f_turno")
+        delegacia = st.text_input("10 - DELEGACIA DE DESTINO", key="f_delegacia", placeholder="Ex: Delegacia Regional")
+        delegado = st.text_input("11 - DELEGADO(A)", key="f_delegado", placeholder="Nome do Delegado(a)")
+        procedimentos = st.text_input("12 - N°(S) DOS PROCEDIMENTO(S)", key="f_procedimentos", placeholder="Ex: IP 452/2026, Mandado de Prisão")
+        
+        st.markdown("##### 🔹 Seção B - Equipe Policial")
+        composicao = st.text_area("13 - COMPOSIÇÃO (INTEGRANTES DA EQUIPE)*", key="f_composicao", placeholder="Ex: 3º SGT PM Silva, CB PM Costa, SD PM Lima", height=80)
+        condutor = st.text_input("14 - CONDUTOR (POSTO/GRAD, NOME E MATRÍCULA)*", key="f_condutor", placeholder="Ex: 3º SGT PM 18.234 Silva (Mat: 123.456-1-X)")
+        testemunhas_policiais = st.text_input("15 - TESTEMUNHAS POLICIAIS", key="f_test_pol", placeholder="Ex: CB PM 25.109 Costa; SD PM 31.882 Lima")
+        
+        st.markdown("##### 🔹 Seção C - Localização e Envolvidos")
+        local_ocorrencia = st.text_input("16 - LOCAL DA OCORRÊNCIA*", key="f_loc_oco", placeholder="Endereco completo ou referencia")
+        local_abordagem = st.text_input("17 - LOCAL DA ABORDAGEM*", key="f_loc_abo", placeholder="Endereco exato da abordagem")
+        acusado = st.text_input("18 - ACUSADO*", key="f_acusado", placeholder="Nome completo do acusado ou A apurar")
+        vitimas = st.text_input("19 - VÍTIMAS*", key="f_vitimas", placeholder="Nome da vitima ou A Sociedade")
+        testemunhas_povo = st.text_input("26 - TESTEMUNHAS DO POVO", value="Não identificadas no local", key="f_test_povo")
+        
+        c_r1, c_r2 = st.columns(2)
+        ficaram_preso = c_r1.radio("29 - FICARAM PRESO?*", ["Sim", "Não"], horizontal=True, key="f_preso")
+        suspeitos_menores = c_r2.radio("30 - SUSPEITOS MENORES?*", ["Não", "Sim"], horizontal=True, key="f_menor")
+        
+        st.markdown("##### 🔹 Seção D - Apreensões e Bens Recuperados")
+        armas = st.text_input("20 - ARMA(S) APREENDIDA(S)", value="Nenhuma", key="f_armas")
+        municao = st.text_input("21 - MUNIÇÃO APREENDIDA", value="Nenhuma", key="f_municao")
+        drogas = st.text_input("22 - DROGA(S) APREENDIDA(S)", value="Nenhuma", key="f_drogas")
+        veiculos = st.text_input("23 - VEÍCULO(S) RECUPERADO(S)", value="Nenhum", key="f_veiculos")
+        quantia_recuperada = st.text_input("24 - QUANTIA RECUPERADA", value="R$ 0,00", key="f_qnt_rec")
+        quantia_apreendida = st.text_input("25 - QUANTIA APREENDIDA", value="R$ 0,00", key="f_qnt_apr")
+        objetos_recuperados = st.text_input("27 - OBJETO(S) RECUPERADO(S)", value="Nenhum", key="f_obj_rec")
+        objetos_apreendidos = st.text_input("28 - OBJETO(S) APREENDIDO(S)", value="Nenhum", key="f_obj_apr")
+        
+        st.markdown("##### 🔹 Seção E - Histórico da Ocorrência")
+        narrativa = st.text_area("31 - NARRATIVA SUCINTA DA OCORRÊNCIA*", height=160, key="f_narrativa", placeholder="Resumo claro, cronologico e impessoal do patrulhamento, abordagem, constatacao da infracao, apreensoes e conducao...")
+        
+        btn_submit = st.form_submit_button("🚨 SALVAR E REGISTRAR OCORRÊNCIA")
+        
+        if btn_submit:
+            if not (unidade and natureza and vtr and composicao and condutor and local_ocorrencia and acusado and narrativa):
+                st.error("Por favor, preencha todos os campos obrigatórios marcados com (*).")
+            else:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO ocorrências (
+                        unidade, data_fato, hora_inicial, hora_final, natureza, vtr, ht, ciops, turno,
+                        delegacia, delegado, procedimentos, composicao, condutor, testemunhas_policiais,
+                        local_ocorrencia, local_abordagem, acusado, vitimas, armas, municao, drogas,
+                        veiculos, quantia_recuperada, quantia_apreendida, testemunhas_povo,
+                        objetos_recuperados, objetos_apreendidos, ficaram_preso, suspeitos_menores,
+                        narrativa, data_registro, equipe
+                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                ''', (
+                    unidade, data_fato, hora_inicial, hora_final, natureza, vtr, ht, ciops, turno,
+                    delegacia, delegado, procedimentos, composicao, condutor, testemunhas_policiais,
+                    local_ocorrencia, local_abordagem, acusado, vitimas, armas, municao, drogas,
+                    veiculos, quantia_recuperada, quantia_apreendida, testemunhas_povo,
+                    objetos_recuperados, objetos_apreendidos, ficaram_preso, suspeitos_menores,
+                    narrativa, datetime.now().strftime("%d/%m/%Y %H:%M"), equipe
+                ))
+                conn.commit()
+                st.success(f"✅ Ocorrência cadastrada com sucesso pela **{equipe}**! Protocolo gerado: Nº {cursor.lastrowid:06d}")
+
+with tab_admin:
+    st.subheader("Acesso Restrito ao Comando")
+    
+    with st.form("form_login_comando"):
+        senha = st.text_input("Insira a Senha de Acesso Administrador", type="password", key="f_senha_adm")
+        btn_entrar = st.form_submit_button("🔓 ENTRAR NO PAINEL")
+    
+    if btn_entrar:
+        if senha == "comando2026":
+            st.session_state["autenticado"] = True
+        else:
+            st.error("Senha incorreta. Acesso negado.")
+            st.session_state["autenticado"] = False
+
+    if st.session_state.get("autenticado", False):
+        st.success("Autenticação realizada com sucesso!")
+        df = pd.read_sql_query("SELECT * FROM ocorrências ORDER BY id DESC", conn)
+        
+        if 'equipe' not in df.columns:
+            df['equipe'] = 'Equipe Alfa'
+        df['equipe'] = df['equipe'].fillna('Equipe Alfa')
+        
+        st.markdown("---")
+        st.markdown("## 🏆 Painel Geral de Desempenho e Ranking das Equipes")
+        
+        equipes_list = ["Equipe Alfa", "Equipe Bravo", "Equipe Charlie", "Equipe Delta"]
+        stats = []
+
+        for eq in equipes_list:
+            df_eq = df[df['equipe'] == eq]
+            tot_ocorr = len(df_eq)
+            
+            trafico = df_eq[df_eq['natureza'] == 'Tráfico'].shape[0]
+            armas = df_eq[df_eq['natureza'] == 'Apreensão de arma'].shape[0]
+            mandados = df_eq[df_eq['natureza'] == 'Mandado'].shape[0]
+            intervencao = df_eq[df_eq['natureza'] == 'Intervenção'].shape[0]
+            outros = df_eq[df_eq['natureza'] == 'Outros'].shape[0]
+            
+            pontos = (tot_ocorr * 1) + (trafico * 3) + (armas * 3) + (mandados * 2)
+            
+            stats.append({
+                "Equipe": eq,
+                "Total de Ocorrências": tot_ocorr,
+                "Tráfico": trafico,
+                "Apreensão de Arma": armas,
+                "Mandado": mandados,
+                "Intervenção": intervencao,
+                "Outros": outros,
+                "Pontuação Total": pontos
+            })
+
+        df_ranking = pd.DataFrame(stats).sort_values(by="Pontuação Total", ascending=False).reset_index(drop=True)
+        
+        c1, c2, c3, c4 = st.columns(4)
+        cols = [c1, c2, c3, c4]
+        for idx, row in df_ranking.iterrows():
+            with cols[idx]:
+                if idx == 0:
+                    pos_str = "🥇 1º Lugar"
+                elif idx == 1:
+                    pos_str = "🥈 2º Lugar"
+                elif idx == 2:
+                    pos_str = "🥉 3º Lugar"
+                else:
+                    pos_str = "4º Lugar"
+                
+                st.metric(label=f"{pos_str} • {row['Equipe']}", value=f"{row['Pontuação Total']} pts", delta=f"{row['Total de Ocorrências']} Ocorrências")
+
+        st.markdown("### 📊 Gráfico Comparativo por Natureza da Ocorrência")
+        chart_data = df_ranking.set_index("Equipe")[["Tráfico", "Apreensão de Arma", "Mandado", "Intervenção", "Outros"]]
+        st.bar_chart(chart_data)
+
+        st.markdown("### 📋 Tabela Detalhada do Ranking")
+        st.dataframe(
+            df_ranking.style.background_gradient(subset=["Pontuação Total"], cmap="Greens"),
+            use_container_width=True
+        )
+
+        pdf_ranking_bytes = gerar_pdf_ranking(df_ranking)
+        st.download_button(
+            label="📄 BAIXAR RELATÓRIO ESTATÍSTICO DE RANKING EM PDF",
+            data=pdf_ranking_bytes,
+            file_name=f"Ranking_Equipes_PMCE_{datetime.now().strftime('%d_%m_%Y')}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+            key="btn_pdf_ranking"
+        )
+        
+        st.markdown("---")
+        if not df.empty:
+            st.markdown("### 🔍 Pesquisa e Filtros de Ocorrências")
+            c_f1, c_f2, c_f3 = st.columns(3)
+            filtro_vtr = c_f1.text_input("Filtrar por Viatura (VTR)", key="f_filt_vtr")
+            filtro_acusado = c_f2.text_input("Filtrar por Acusado", key="f_filt_acu")
+            filtro_equipe = c_f3.selectbox("Filtrar por Equipe", ["Todas"] + equipes_list, key="f_filt_eq")
+            
+            df_filtered = df.copy()
+            if filtro_vtr:
+                df_filtered = df_filtered[df_filtered['vtr'].str.contains(filtro_vtr, case=False, na=False)]
+            if filtro_acusado:
+                df_filtered = df_filtered[df_filtered['acusado'].str.contains(filtro_acusado, case=False, na=False)]
+            if filtro_equipe != "Todas":
+                df_filtered = df_filtered[df_filtered['equipe'] == filtro_equipe]
+                
+            st.dataframe(
+                df_filtered[['id', 'data_fato', 'equipe', 'unidade', 'vtr', 'natureza', 'acusado', 'ficaram_preso']],
+                use_container_width=True
+            )
+            
+            st.markdown("---")
+            st.markdown("### ✏️ Gerenciar Ocorrência Específica")
+            id_selecionado = st.number_input("Informe o Número do Protocolo (ID)", min_value=1, max_value=int(df['id'].max()), step=1, key="f_id_sel")
+            ocorrencia_row = df[df['id'] == id_selecionado]
+            
+            if not ocorrencia_row.empty:
+                d = ocorrencia_row.iloc[0].to_dict()
+                col_btn1, col_btn2, col_btn3 = st.columns(3)
+                
+                with col_btn1:
+                    pdf_data = gerar_pdf_ocorrencia(d)
+                    st.download_button(
+                        label="📄 BAIXAR RELATÓRIO OFICIAL EM PDF",
+                        data=pdf_data,
+                        file_name=f"Relatorio_PMCE_{d['id']:06d}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                        key="f_btn_pdf"
+                    )
+                
+                with col_btn2:
+                    st.info(f"Ocorrência Selecionada: Protocolo #{d['id']:06d} ({d.get('equipe', 'Equipe Alfa')})")
+                
+                with col_btn3:
+                    with st.expander("⚠️ Excluir ocorrência", expanded=False):
+                        st.warning("Essa ação é **irreversível**. Deseja realmente excluir?")
+                        if st.button("🗑️ CONFIRMAR EXCLUSÃO", key="btn_excluir", use_container_width=True):
+                            cursor = conn.cursor()
+                            cursor.execute("DELETE FROM ocorrências WHERE id = ?", (id_selecionado,))
+                            conn.commit()
+                            st.success(f"Ocorrência #{id_selecionado:06d} excluída permanentemente.")
+                            st.rerun()
+                
+                with st.expander("🛠️ Clique para EDITAR os campos desta ocorrência"):
+                    with st.form("edit_form"):
+                        e_equipe = st.selectbox("Equipe", equipes_list, index=equipes_list.index(d.get('equipe', 'Equipe Alfa')), key="e_eq")
+                        e_unidade = st.text_input("Unidade", value=d['unidade'], key="e_uni")
+                        
+                        idx_nat = opcoes_natureza.index(d['natureza']) if d['natureza'] in opcoes_natureza else 4
+                        e_natureza = st.selectbox("Natureza da Ocorrência", opcoes_natureza, index=idx_nat, key="e_nat")
+                        
+                        e_procedimentos = st.text_input("Procedimentos", value=d['procedimentos'], key="e_proc")
+                        e_acusado = st.text_input("Acusado", value=d['acusado'], key="e_acu")
+                        e_narrativa = st.text_area("Narrativa", value=d['narrativa'], height=120, key="e_nar")
+                        
+                        btn_salvar_edicao = st.form_submit_button("Salvar Alterações no Banco de Dados")
+                        if btn_salvar_edicao:
+                            cursor = conn.cursor()
+                            cursor.execute('''
+                                UPDATE ocorrências 
+                                SET equipe=?, unidade=?, natureza=?, procedimentos=?, acusado=?, narrativa=? 
+                                WHERE id=?
+                            ''', (e_equipe, e_unidade, e_natureza, e_procedimentos, e_acusado, e_narrativa, id_selecionado))
+                            conn.commit()
+                            st.success("Ocorrência alterada com sucesso!")
+                            st.rerun()
+            else:
+                st.info("Nenhuma ocorrência encontrada com este ID.")
+        else:
+            st.info("Nenhuma ocorrência registrada até o momento.")
